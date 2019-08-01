@@ -1,0 +1,48 @@
+
+version: '2.1'
+services:
+  image:
+    container_name: ${CONTAINER_HOST_NAME:-standalone.rsync}
+    environment:
+      - RSYNC_HOSTS_ALLOW=${RSYNC_HOSTS_ALLOW:-192.168.0.0/24 192.168.1.0/24 192.168.8.0/24 192.168.24.0/24 172.16.0.0/12 127.0.0.1/32}
+      - RSYNC_PASSWORD=${RSYNC_PASSWORD:-rsync_user_pass}
+      - RSYNC_USERNAME=${RSYNC_USERNAME:-rsync_user}
+      - RSYNC_VOLUME_PATH=${RSYNC_VOLUME_PATH:-/data}
+    hostname: ${CONTAINER_HOST_NAME:-standalone.rsync}
+    image: ${IMAGE_PREFIX:-cirepo/}${IMAGE_NAME:-rsync}:${IMAGE_TAG:-latest}
+    network_mode: bridge
+    ports:
+      - "${EXTERNAL_RSYNC_873_PORT:-873}:873"
+      - "${EXTERNAL_SSH_22_PORT:-22}:22"
+    restart: always
+    volumes:
+      - data:/data
+      - dot_ssh:/root/.ssh
+      - host_user_dot_ssh:/root/host_dot_ssh
+      - pwd:${PWD}
+
+volumes:
+  data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/data/data
+      o: bind
+  dot_ssh:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/data/dot_ssh
+      o: bind
+  host_user_dot_ssh:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${HOME}/.ssh
+      o: bind
+  pwd:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}
+      o: bind
