@@ -33,10 +33,53 @@ under the License.
     Wagon provider that gets and puts artifacts with a preinstalled rsync client
   </description>
 
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>test-outputs-clean</id>
+            <phase>clean</phase>
+            <goals><goal>run</goal></goals>
+            <configuration>
+              <target>
+                <delete failonerror="false" includeemptydirs="true" verbose="true"><fileset dir="bar"/></delete>
+                <delete failonerror="false" includeemptydirs="true" verbose="true"><fileset dir="spaces"/></delete>
+                <delete failonerror="false" includeemptydirs="true" verbose="true"><fileset dir="test"/></delete>
+                <delete failonerror="false" includeemptydirs="true" verbose="true"><fileset dir="with"/></delete>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>animal-sniffer-maven-plugin</artifactId>
+          <groupId>org.codehaus.mojo</groupId>
+          <version>${version.animal-sniffer-maven-plugin}</version>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-antrun-plugin</artifactId><version>${version.maven-antrun-plugin}</version>
+          <dependencies>
+            <dependency><groupId>ant-contrib</groupId><artifactId>ant-contrib</artifactId><version>${version.ant-contrib}</version></dependency>
+          </dependencies>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
   <dependencies>
     <dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-utils</artifactId></dependency>
     <dependency><groupId>org.apache.maven.wagon</groupId><artifactId>wagon-ssh-common</artifactId></dependency>
     <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-simple</artifactId></dependency>
+
+    <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><version>${version.lombok}</version><optional>true</optional></dependency>
 
     <dependency><groupId>org.apache.maven.wagon</groupId><artifactId>wagon-ssh-common-test</artifactId><scope>test</scope></dependency>
     <dependency><groupId>org.bouncycastle</groupId><artifactId>bcpkix-jdk15on</artifactId><scope>test</scope><version>${version.bouncycastle}</version></dependency>
@@ -55,9 +98,10 @@ under the License.
               <!-- Tests that require an ssh server on localhost -->
               <excludes>
                 <exclude>**/SshCommandExecutorTest.*</exclude>
-                <exclude>**/Scp*Test.*</exclude>
-                <exclude>**/EmbeddedScp*WagonWithKeyTest.*</exclude>
+                <exclude>**/Rsync*Test.*</exclude>
+                <exclude>**/EmbeddedRsync*WagonWithKeyTest.*</exclude>
               </excludes>
+              <runOrder>alphabetical</runOrder>
               <systemPropertyVariables>
                 <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
               </systemPropertyVariables>
@@ -77,12 +121,20 @@ under the License.
               <!-- Tests that require an ssh server on localhost -->
               <excludes>
                 <exclude>**/SshCommandExecutorTest.*</exclude>
-                <exclude>**/Scp*Test.*</exclude>
+                <exclude>**/Rsync*Test.*</exclude>
               </excludes>
             </configuration>
           </plugin>
         </plugins>
       </build>
+    </profile>
+    <profile>
+      <id>skip-tests-when-fast-option-present</id>
+      <activation><property><name>fast</name></property></activation>
+      <properties>
+        <skipTests>true</skipTests>
+        <skipITs>true</skipITs>
+      </properties>
     </profile>
   </profiles>
 
@@ -90,8 +142,17 @@ under the License.
     <checkstyle.failsOnError>false</checkstyle.failsOnError>
     <checkstyle.failOnViolation>false</checkstyle.failOnViolation>
     <checkstyle.maxAllowedViolations>10</checkstyle.maxAllowedViolations>
+
+    <java.version>8</java.version>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+
     <rat.numUnapprovedLicenses>100</rat.numUnapprovedLicenses>
 
+    <version.animal-sniffer-maven-plugin>1.16</version.animal-sniffer-maven-plugin>
+    <version.ant-contrib>20020829</version.ant-contrib>
     <version.bouncycastle>1.56</version.bouncycastle>
+    <version.lombok>1.18.8</version.lombok>
+    <version.maven-antrun-plugin>1.8</version.maven-antrun-plugin>
   </properties>
 </project>

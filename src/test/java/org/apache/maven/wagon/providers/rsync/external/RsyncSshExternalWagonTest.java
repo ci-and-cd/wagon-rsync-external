@@ -31,7 +31,7 @@ import java.io.File;
  * @author <a href="michal.maczka@dimatics.com">Michal Maczka</a>
  *
  */
-public class RsyncExternalWagonTest
+public class RsyncSshExternalWagonTest
     extends WagonTestCase
 {
     protected int getExpectedContentLengthOnGet( int expectedSize )
@@ -51,12 +51,12 @@ public class RsyncExternalWagonTest
 
     protected String getProtocol()
     {
-        return "rsyncexe";
+        return "rsyncsshexe";
     }
 
     public String getTestRepositoryUrl()
     {
-        return TestData.getTestRepositoryUrl();
+        return TestData.getTestRepositoryUrl(this.getProtocol());
     }
 
     protected AuthenticationInfo getAuthInfo()
@@ -79,31 +79,32 @@ public class RsyncExternalWagonTest
         return authInfo;
     }
 
-    public void testIsPuTTY()
-        throws Exception
-    {
-        RsyncExternalWagon wagon = (RsyncExternalWagon) getWagon();
-
-        wagon.setSshExecutable( "c:\\program files\\PuTTY\\plink.exe" );
-        assertTrue( wagon.isPuTTY() );
-        wagon.setSshExecutable( "plink" );
-        assertTrue( wagon.isPuTTY() );
-        wagon.setSshExecutable( "PLINK" );
-        assertTrue( wagon.isPuTTY() );
-        wagon.setSshExecutable( "PlInK" );
-        assertTrue( wagon.isPuTTY() );
-        wagon.setSshExecutable( "ssh" );
-        assertFalse( wagon.isPuTTY() );
-
-        wagon.setScpExecutable( "c:\\program files\\PuTTY\\pscp.exe" );
-        assertTrue( wagon.isPuTTYSCP() );
-        wagon.setScpExecutable( "pscp" );
-        assertTrue( wagon.isPuTTYSCP() );
-        wagon.setScpExecutable( "PSCP" );
-        assertTrue( wagon.isPuTTYSCP() );
-        wagon.setScpExecutable( "PsCp" );
-        assertTrue( wagon.isPuTTYSCP() );
-        wagon.setScpExecutable( "scp" );
-        assertFalse( wagon.isPuTTYSCP() );
-    }
+    // TODO PuTTY by itself does not provide rsync.
+    // public void testIsPuTTY()
+    //     throws Exception
+    // {
+    //     ScpExternalWagon wagon = (ScpExternalWagon) getWagon();
+    //
+    //     wagon.setSshExecutable( "c:\\program files\\PuTTY\\plink.exe" );
+    //     assertTrue( wagon.isPuTTY() );
+    //     wagon.setSshExecutable( "plink" );
+    //     assertTrue( wagon.isPuTTY() );
+    //     wagon.setSshExecutable( "PLINK" );
+    //     assertTrue( wagon.isPuTTY() );
+    //     wagon.setSshExecutable( "PlInK" );
+    //     assertTrue( wagon.isPuTTY() );
+    //     wagon.setSshExecutable( "ssh" );
+    //     assertFalse( wagon.isPuTTY() );
+    //
+    //     wagon.setScpExecutable( "c:\\program files\\PuTTY\\pscp.exe" );
+    //     assertTrue( wagon.isPuTTYSCP() );
+    //     wagon.setScpExecutable( "pscp" );
+    //     assertTrue( wagon.isPuTTYSCP() );
+    //     wagon.setScpExecutable( "PSCP" );
+    //     assertTrue( wagon.isPuTTYSCP() );
+    //     wagon.setScpExecutable( "PsCp" );
+    //     assertTrue( wagon.isPuTTYSCP() );
+    //     wagon.setScpExecutable( "scp" );
+    //     assertFalse( wagon.isPuTTYSCP() );
+    // }
 }

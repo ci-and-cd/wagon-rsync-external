@@ -118,10 +118,10 @@ Vagrant.configure("2") do |config|
     sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
     sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
 
-    RSYNC_USERNAME=${RSYNC_USERNAME:-rsync_user}
-    RSYNC_PASSWORD=${RSYNC_PASSWORD:-rsync_user_pass}
+    RSYNC_USERNAME=${RSYNC_USERNAME:-root}
+    RSYNC_PASSWORD=${RSYNC_PASSWORD:-comeonFrance!:-)}
     RSYNC_HOSTS_ALLOW=${RSYNC_HOSTS_ALLOW:-192.168.0.0/16 192.168.33.0/24 127.0.0.1/32}
-    RSYNC_VOLUME_PATH=${RSYNC_VOLUME_PATH:-/data}
+    RSYNC_VOLUME_PATH=${RSYNC_VOLUME_PATH:-/volume}
 
     if [[ -e "/home/vagrant/.ssh/authorized_keys" ]]; then
         chown vagrant:vagrant /home/vagrant/.ssh/authorized_keys

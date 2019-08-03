@@ -20,24 +20,17 @@ package org.apache.maven.wagon.providers.rsync.external;
  */
 
 /**
- * ScpExternalCommandExecutor - bridge class for plexus:descriptor 
+ * ScpExternalCommandExecutor - bridge class for plexus:descriptor
  *
  * @author <a href="mailto:joakim@erdfelt.com">Joakim Erdfelt</a>
- *
- * 
  * @todo is this even needed anymore?
- * 
  * @plexus.component role="org.apache.maven.wagon.CommandExecutor"
- *   role-hint="rsyncexe"
- *   instantiation-strategy="per-lookup"
+ * role-hint="rsyncsshexe"
+ * instantiation-strategy="per-lookup"
  */
-public class RsyncExternalCommandExecutor
-    extends RsyncExternalWagon
-{
+public class RsyncExternalCommandExecutor extends RsyncExternalWagon {
 
-    public RsyncExternalCommandExecutor()
-    {
+    public RsyncExternalCommandExecutor() {
         super();
     }
-
 }

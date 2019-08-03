@@ -7,20 +7,20 @@ import org.codehaus.plexus.util.FileUtils;
 
 public class TestData {
 
-    public static String getTempDirectory() {
-        return System.getProperty("java.io.tmpdir", "target");
+    private static String getTempDirectory() {
+        return System.getProperty("java.io.tmpdir", "/target");
     }
 
-    public static String getTestRepositoryUrl(int port) {
-        return "rsyncexe://" + getHostname() + ":" + port + getRepoPath();
+    public static String getTestRepositoryUrl(String protocol, int port) {
+        return protocol + "://" + getHostname() + ":" + port + getRepoPath();
     }
 
-    public static String getTestRepositoryUrl() {
-        return "rsyncexe://" + getHostname() + getRepoPath();
+    public static String getTestRepositoryUrl(String protocol) {
+        return protocol + "://" + getHostname() + getRepoPath();
     }
 
-    public static String getRepoPath() {
-        return getTempDirectory() + "/wagon-ssh-test/" + getUserName();
+    private static String getRepoPath() {
+        return "/volume" + getTempDirectory() + "/wagon-ssh-test/" + getUserName();
     }
 
     public static String getUserName() {

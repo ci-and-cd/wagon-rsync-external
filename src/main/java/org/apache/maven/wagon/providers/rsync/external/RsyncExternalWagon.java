@@ -1,31 +1,15 @@
 package org.apache.maven.wagon.providers.rsync.external;
 
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Locale;
 
-import org.apache.maven.wagon.AbstractWagon;
-import org.apache.maven.wagon.CommandExecutionException;
-import org.apache.maven.wagon.CommandExecutor;
-import org.apache.maven.wagon.PathUtils;
-import org.apache.maven.wagon.PermissionModeUtils;
+import lombok.Getter;
+import lombok.Setter;
+
+import org.apache.maven.wagon.ConnectionException;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
-import org.apache.maven.wagon.Streams;
 import org.apache.maven.wagon.TransferFailedException;
 import org.apache.maven.wagon.WagonConstants;
 import org.apache.maven.wagon.authentication.AuthenticationException;
@@ -33,413 +17,255 @@ import org.apache.maven.wagon.authentication.AuthenticationInfo;
 import org.apache.maven.wagon.authorization.AuthorizationException;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.providers.ssh.ScpHelper;
-import org.apache.maven.wagon.repository.RepositoryPermissions;
+import org.apache.maven.wagon.proxy.ProxyInfoProvider;
+import org.apache.maven.wagon.repository.Repository;
 import org.apache.maven.wagon.resource.Resource;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.cli.CommandLineException;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.codehaus.plexus.util.cli.Commandline;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.List;
-import java.util.Locale;
-
 /**
- * SCP deployer using "external" scp program.  To allow for
+ * RSYNC deployer using "external" rsync program.  To allow for
  * ssh-agent type behavior, until we can construct a Java SSH Agent and interface for JSch.
  *
- * @author <a href="mailto:brett@apache.org">Brett Porter</a>
+ * @author <a href="mailto:chshawkn@users.noreply.github.com">Haolun Zhang</a>
  * @todo [BP] add compression flag
  * @plexus.component role="org.apache.maven.wagon.Wagon"
- * role-hint="rsyncexe"
+ * role-hint="rsyncsshexe"
  * instantiation-strategy="per-lookup"
  */
-public class RsyncExternalWagon extends AbstractWagon implements CommandExecutor {
-    /**
-     * The external SCP command to use - default is <code>scp</code>.
-     *
-     * @component.configuration default="scp"
-     */
-    private String scpExecutable = "scp";
+public class RsyncExternalWagon extends SshWagon {
 
     /**
      * The external SSH command to use - default is <code>ssh</code>.
      *
      * @component.configuration default="ssh"
      */
+    @Getter
+    @Setter
     private String sshExecutable = "ssh";
-
-    /**
-     * Arguments to pass to the SCP command.
-     *
-     * @component.configuration
-     */
-    private String scpArgs;
 
     /**
      * Arguments to pass to the SSH command.
      *
      * @component.configuration
      */
+    @Getter
+    @Setter
     private String sshArgs;
 
-    private ScpHelper sshTool = new ScpHelper(this);
-
-    private static final int SSH_FATAL_EXIT_CODE = 255;
-
-    // ----------------------------------------------------------------------
-    //
-    // ----------------------------------------------------------------------
-
-    protected void openConnectionInternal()
-        throws AuthenticationException {
-        if (authenticationInfo == null) {
-            authenticationInfo = new AuthenticationInfo();
-        }
-    }
-
-    public void closeConnection() {
-        // nothing to disconnect
-    }
-
-    public boolean getIfNewer(String resourceName, File destination, long timestamp)
-        throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
-        fireSessionDebug("getIfNewer in SCP wagon is not supported - performing an unconditional get");
-        get(resourceName, destination);
-        return true;
-    }
-
     /**
-     * @return The hostname of the remote server prefixed with the username, which comes either from the repository URL
-     * or from the authenticationInfo.
+     * Arguments to pass to the RSYNC command.
+     *
+     * @component.configuration
      */
-    private String buildRemoteHost() {
-        String username = this.getRepository().getUsername();
-        if (username == null) {
-            username = authenticationInfo.getUserName();
-        }
+    @Getter
+    @Setter
+    private String rsyncArgs = "--progress";
+    /**
+     * The external RSYNC command to use - default is <code>rsync</code>.
+     *
+     * @component.configuration default="rsync"
+     */
+    @Getter
+    @Setter
+    private String rsyncExecutable = "rsync";
 
-        if (username == null) {
-            return getRepository().getHost();
-        } else {
-            return username + "@" + getRepository().getHost();
+    public RsyncExternalWagon() {
+        this.interactive = false;
+    }
+
+    @Override
+    public void putDirectory(
+        final File sourceDirectory,
+        final String destinationDirectory
+    ) throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
+        // TODO use unique tmp dirs
+        final String repoPrefix = "target/rsync/repo";
+        final String repoDir = StringUtils.replace(getRepository().getBasedir(), " ", "\\ ");
+        final File repoTemplate = new File(repoPrefix + prefixSlash(repoDir));
+        repoTemplate.mkdirs();
+        executeCopyCommand(new Resource("/"), "/", new File(repoPrefix), true, "-rd");
+
+        final String destPrefix = "target/rsync/dest";
+        final String destDir = this.normalize(destinationDirectory);
+        final File destTemplate = new File(destPrefix + prefixSlash(destDir));
+        destTemplate.mkdirs();
+        executeCopyCommand(new Resource("/"), new File(destPrefix), true, "-rd");
+
+        try {
+            executeCopyCommand(new Resource(destDir), new File(sourceDirectory.getCanonicalPath()), true, "-avc");
+        } catch (final IOException ex) {
+            throw new ResourceDoesNotExistException(ex.getMessage(), ex);
         }
     }
 
-    public void executeCommand(final String command) throws CommandExecutionException {
-        fireTransferDebug("Executing command: " + command);
+    private void createDirectory() {
 
-        executeCommand(command, false);
     }
 
-    public Streams executeCommand(String command, boolean ignoreFailures)
-        throws CommandExecutionException {
-        boolean putty = isPuTTY();
+    @Override
+    protected void executeCopyCommand(
+        final Resource resource,
+        final File localFile,
+        final boolean put,
+        final String... options
+    ) throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
+        final String resourceName = normalizeResource(resource);
+        String remoteFile = getRepository().getBasedir() + prefixSlash(resourceName);
+        if (options.length > 0 && !remoteFile.endsWith("/")) {
+            remoteFile = remoteFile + "/";
+        }
 
+        this.executeCopyCommand(resource, remoteFile, localFile, put, options);
+    }
+
+    private void executeCopyCommand(
+        final Resource resource,
+        final String remoteFile,
+        final File localFile,
+        final boolean put,
+        final String... options
+    ) throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
         File privateKey;
         try {
-            privateKey = ScpHelper.getPrivateKey(authenticationInfo);
-        } catch (FileNotFoundException e) {
-            throw new CommandExecutionException(e.getMessage(), e);
-        }
-        Commandline cl = createBaseCommandLine(putty, sshExecutable, privateKey);
-
-        int port =
-            repository.getPort() == WagonConstants.UNKNOWN_PORT ? ScpHelper.DEFAULT_SSH_PORT : repository.getPort();
-        if (port != ScpHelper.DEFAULT_SSH_PORT) {
-            if (putty) {
-                cl.createArg().setLine("-P " + port);
-            } else {
-                cl.createArg().setLine("-p " + port);
-            }
-        }
-
-        if (sshArgs != null) {
-            cl.createArg().setLine(sshArgs);
-        }
-
-        String remoteHost = this.buildRemoteHost();
-
-        cl.createArg().setValue(remoteHost);
-
-        cl.createArg().setValue(command);
-
-        fireSessionDebug("Executing command: " + cl.toString());
-
-        try {
-            CommandLineUtils.StringStreamConsumer out = new CommandLineUtils.StringStreamConsumer();
-            CommandLineUtils.StringStreamConsumer err = new CommandLineUtils.StringStreamConsumer();
-            int exitCode = CommandLineUtils.executeCommandLine(cl, out, err);
-            Streams streams = new Streams();
-            streams.setOut(out.getOutput());
-            streams.setErr(err.getOutput());
-            fireSessionDebug(streams.getOut());
-            fireSessionDebug(streams.getErr());
-            if (exitCode != 0) {
-                if (!ignoreFailures || exitCode == SSH_FATAL_EXIT_CODE) {
-                    throw new CommandExecutionException("Exit code " + exitCode + " - " + err.getOutput());
-                }
-            }
-            return streams;
-        } catch (CommandLineException e) {
-            throw new CommandExecutionException("Error executing command line", e);
-        }
-    }
-
-    protected boolean isPuTTY() {
-        String exe = sshExecutable.toLowerCase(Locale.ENGLISH);
-        return exe.contains("plink") || exe.contains("klink");
-    }
-
-    private Commandline createBaseCommandLine(boolean putty, String executable, File privateKey) {
-        Commandline cl = new Commandline();
-
-        cl.setExecutable(executable);
-
-        if (privateKey != null) {
-            cl.createArg().setValue("-i");
-            cl.createArg().setFile(privateKey);
-        }
-
-        String password = authenticationInfo.getPassword();
-        if (putty && password != null) {
-            cl.createArg().setValue("-pw");
-            cl.createArg().setValue(password);
-        }
-
-        // should check interactive flag, but rsyncexe never works in interactive mode right now due to i/o streams
-        if (putty) {
-            cl.createArg().setValue("-batch");
-        } else {
-            cl.createArg().setValue("-o");
-            cl.createArg().setValue("BatchMode yes");
-        }
-        return cl;
-    }
-
-
-    private void executeScpCommand(Resource resource, File localFile, boolean put)
-        throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
-        boolean putty = isPuTTYSCP();
-
-        File privateKey;
-        try {
-            privateKey = ScpHelper.getPrivateKey(authenticationInfo);
+            privateKey = ScpHelper.getPrivateKey(this.getAuthenticationInfo());
         } catch (FileNotFoundException e) {
             fireSessionConnectionRefused();
 
             throw new AuthorizationException(e.getMessage());
         }
-        Commandline cl = createBaseCommandLine(putty, scpExecutable, privateKey);
+        final Commandline cl = createRsyncBaseCommandLine(this.getRsyncExecutable(), privateKey);
 
         cl.setWorkingDirectory(localFile.getParentFile().getAbsolutePath());
 
-        int port =
-            repository.getPort() == WagonConstants.UNKNOWN_PORT ? ScpHelper.DEFAULT_SSH_PORT : repository.getPort();
-        if (port != ScpHelper.DEFAULT_SSH_PORT) {
-            cl.createArg().setLine("-P " + port);
+        if (options.length == 0) {
+            cl.createArg().setValue("-az");
+            cl.createArg().setValue("--no-R");
+            cl.createArg().setValue("--no-implied-dirs");
+        } else {
+            for (final String option : options) {
+                cl.createArg().setValue(option);
+            }
         }
 
-        if (scpArgs != null) {
-            cl.createArg().setLine(scpArgs);
+        final String qualifiedRemoteFile = this.buildRemoteHost() + ":" + StringUtils.replace(remoteFile, " ", "\\ ");
+
+        String localFileName = localFile.getName();
+        if (options.length > 0 && !localFileName.endsWith("/")) {
+            localFileName = localFileName + "/";
         }
 
-        String resourceName = normalizeResource(resource);
-        String remoteFile = getRepository().getBasedir() + "/" + resourceName;
+        // if (options.length > 0 && put) {
+        //     cl.createArg().setValue("--rsync-path=\"mkdir -p " + remoteFile + " && rsync\"");
+        // }
 
-        remoteFile = StringUtils.replace(remoteFile, " ", "\\ ");
-
-        String qualifiedRemoteFile = this.buildRemoteHost() + ":" + remoteFile;
         if (put) {
-            cl.createArg().setValue(localFile.getName());
+            cl.createArg().setValue(localFileName);
             cl.createArg().setValue(qualifiedRemoteFile);
         } else {
             cl.createArg().setValue(qualifiedRemoteFile);
-            cl.createArg().setValue(localFile.getName());
+            cl.createArg().setValue(localFileName);
         }
 
         fireSessionDebug("Executing command: " + cl.toString());
 
         try {
             CommandLineUtils.StringStreamConsumer err = new CommandLineUtils.StringStreamConsumer();
-            int exitCode = CommandLineUtils.executeCommandLine(cl, null, err);
+            final int exitCode = CommandLineUtils.executeCommandLine(cl, null, err);
             if (exitCode != 0) {
                 if (!put
-                    && err.getOutput().trim().toLowerCase(Locale.ENGLISH).contains("no such file or directory")) {
+                    && err.getOutput().trim().toLowerCase(Locale.ENGLISH).contains("no such file or directory")
+                ) {
                     throw new ResourceDoesNotExistException(err.getOutput());
                 } else {
-                    TransferFailedException e =
-                        new TransferFailedException("Exit code: " + exitCode + " - " + err.getOutput());
+                    final TransferFailedException e = new TransferFailedException("Exit code: " + exitCode + " - " + err.getOutput());
 
                     fireTransferError(resource, e, put ? TransferEvent.REQUEST_PUT : TransferEvent.REQUEST_GET);
 
                     throw e;
                 }
             }
-        } catch (CommandLineException e) {
-            fireTransferError(resource, e, put ? TransferEvent.REQUEST_PUT : TransferEvent.REQUEST_GET);
+        } catch (final CommandLineException ex) {
+            fireTransferError(resource, ex, put ? TransferEvent.REQUEST_PUT : TransferEvent.REQUEST_GET);
 
-            throw new TransferFailedException("Error executing command line", e);
+            throw new TransferFailedException("Error executing command line", ex);
         }
-    }
-
-    boolean isPuTTYSCP() {
-        String exe = scpExecutable.toLowerCase(Locale.ENGLISH);
-        return exe.contains("pscp") || exe.contains("kscp");
-    }
-
-    private String normalizeResource(Resource resource) {
-        return StringUtils.replace(resource.getName(), "\\", "/");
     }
 
     @Override
-    public void put(final File source, final String destination)
-        throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
-        Resource resource = new Resource(destination);
-
-        firePutInitiated(resource, source);
-
-        if (!source.exists()) {
-            throw new ResourceDoesNotExistException("Specified source file does not exist: " + source);
-        }
-
-        String basedir = getRepository().getBasedir();
-
-        String resourceName = StringUtils.replace(destination, "\\", "/");
-
-        String dir = PathUtils.dirname(resourceName);
-
-        dir = StringUtils.replace(dir, "\\", "/");
-
-        String umaskCmd = null;
-        if (getRepository().getPermissions() != null) {
-            String dirPerms = getRepository().getPermissions().getDirectoryMode();
-
-            if (dirPerms != null) {
-                umaskCmd = "umask " + PermissionModeUtils.getUserMaskFor(dirPerms);
-            }
-        }
-
-        String mkdirCmd = "mkdir -p " + basedir + "/" + dir + "\n";
-
-        if (umaskCmd != null) {
-            mkdirCmd = umaskCmd + "; " + mkdirCmd;
-        }
-
-        try {
-            executeCommand(mkdirCmd);
-        } catch (CommandExecutionException e) {
-            fireTransferError(resource, e, TransferEvent.REQUEST_PUT);
-
-            throw new TransferFailedException("Error executing command for transfer", e);
-        }
-
-        resource.setContentLength(source.length());
-
-        resource.setLastModified(source.lastModified());
-
-        firePutStarted(resource, source);
-
-        executeScpCommand(resource, source, true);
-
-        postProcessListeners(resource, source, TransferEvent.REQUEST_PUT);
-
-        try {
-            RepositoryPermissions permissions = getRepository().getPermissions();
-
-            if (permissions != null && permissions.getGroup() != null) {
-                executeCommand("chgrp -f " + permissions.getGroup() + " " + basedir + "/" + resourceName + "\n",
-                    true);
-            }
-
-            if (permissions != null && permissions.getFileMode() != null) {
-                executeCommand("chmod -f " + permissions.getFileMode() + " " + basedir + "/" + resourceName + "\n",
-                    true);
-            }
-        } catch (CommandExecutionException e) {
-            fireTransferError(resource, e, TransferEvent.REQUEST_PUT);
-
-            throw new TransferFailedException("Error executing command for transfer", e);
-        }
-        firePutCompleted(resource, source);
+    public void connect(
+        final Repository repository,
+        final AuthenticationInfo authenticationInfo,
+        final ProxyInfoProvider proxyInfoProvider
+    ) throws ConnectionException, AuthenticationException {
+        super.connect(repository, authenticationInfo, proxyInfoProvider);
     }
 
     @Override
-    public void get(final String resourceName, final File destination)
-        throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
-        String path = StringUtils.replace(resourceName, "\\", "/");
-
-        Resource resource = new Resource(path);
-
-        fireGetInitiated(resource, destination);
-
-        createParentDirectories(destination);
-
-        fireGetStarted(resource, destination);
-
-        executeScpCommand(resource, destination, false);
-
-        postProcessListeners(resource, destination, TransferEvent.REQUEST_GET);
-
-        fireGetCompleted(resource, destination);
+    public boolean isInteractive() {
+        return false; // unsupported
     }
 
-    //
-    // these parameters are user specific, so should not be read from the repository itself.
-    // They can be configured by plexus, or directly on the instantiated object.
-    // Alternatively, we may later accept a generic parameters argument to connect, or some other configure(Properties)
-    // method on a Wagon.
-    //
-
-    public List<String> getFileList(String destinationDirectory)
-        throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
-        return sshTool.getFileList(destinationDirectory, repository);
+    @Override
+    public void setInteractive(final boolean interactive) {
+        // unsupported
     }
 
-    public void putDirectory(File sourceDirectory, String destinationDirectory)
-        throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
-        sshTool.putDirectory(this, sourceDirectory, destinationDirectory);
+    private Commandline createRsyncBaseCommandLine(final String executable, final File privateKey) {
+        final StringBuilder ssh = new StringBuilder(this.getSshExecutable()).append(" ");
+        if (privateKey != null) {
+            ssh.append("-i ").append(privateKey.getAbsolutePath()).append(" ");
+        }
+        if (this.getSshArgs() != null) {
+            ssh.append(this.getSshArgs()).append(" ");
+        }
+
+        if (this.getSshArgs() != null && !this.getSshArgs().contains(" StrictHostKeyChecking=")) {
+            ssh.append("-o StrictHostKeyChecking=no ");
+        }
+
+        if (this.getSshArgs() != null && !this.getSshArgs().contains(" UserKnownHostsFile=")) {
+            final File knowHostsFile = new File("target/dummy_knowhost");
+            if (knowHostsFile.exists()) {
+                knowHostsFile.delete();
+            }
+            try {
+                ssh.append("-o UserKnownHostsFile=").append(knowHostsFile.getCanonicalPath()).append(" ");
+            } catch (final IOException ignored) {
+                // ignored
+            }
+        }
+
+        int port = this.getRepository().getPort() == WagonConstants.UNKNOWN_PORT
+            ? ScpHelper.DEFAULT_SSH_PORT
+            : this.getRepository().getPort();
+        if (port != ScpHelper.DEFAULT_SSH_PORT) {
+            ssh.append("-P ").append(port).append(" ");
+        }
+
+        final String username = this.getRepository().getUsername() != null
+            ? this.getRepository().getUsername()
+            : this.getAuthenticationInfo().getUserName();
+        if (username != null) {
+            ssh.append("-l ").append(username).append(" ");
+        }
+
+
+        final Commandline rsyncCl = new Commandline();
+        rsyncCl.setExecutable(executable);
+
+        if (this.getRsyncArgs() != null) {
+            rsyncCl.createArg().setLine(this.getRsyncArgs());
+        }
+
+        rsyncCl.createArg().setValue("-e");
+        rsyncCl.createArg().setValue(ssh.toString().trim());
+        return rsyncCl;
     }
 
-    public boolean resourceExists(String resourceName)
-        throws TransferFailedException, AuthorizationException {
-        return sshTool.resourceExists(resourceName, repository);
-    }
-
-    public boolean supportsDirectoryCopy() {
-        return true;
-    }
-
-    public String getScpExecutable() {
-        return scpExecutable;
-    }
-
-    public void setScpExecutable(String scpExecutable) {
-        this.scpExecutable = scpExecutable;
-    }
-
-    public String getSshExecutable() {
-        return sshExecutable;
-    }
-
-    public void setSshExecutable(String sshExecutable) {
-        this.sshExecutable = sshExecutable;
-    }
-
-    public String getScpArgs() {
-        return scpArgs;
-    }
-
-    public void setScpArgs(String scpArgs) {
-        this.scpArgs = scpArgs;
-    }
-
-    public String getSshArgs() {
-        return sshArgs;
-    }
-
-    public void setSshArgs(String sshArgs) {
-        this.sshArgs = sshArgs;
+    private static String prefixSlash(final String str) {
+        return str == null || str.startsWith("/") ? str : "/" + str;
     }
 }

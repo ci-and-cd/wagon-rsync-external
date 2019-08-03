@@ -28,10 +28,10 @@ import org.apache.maven.wagon.repository.Repository;
  * @author <a href="mailto:brett@apache.org">Brett Porter</a>
  *
  */
-public class RsyncCommandExecutorTest extends CommandExecutorTestCase {
+public class SshCommandExecutorTest extends CommandExecutorTestCase {
 
     protected Repository getTestRepository()
     {
-        return new Repository( "test", "rsyncexe://localhost/" );
+        return new Repository( "test", "rsyncsshexe://localhost/" );
     }
 }

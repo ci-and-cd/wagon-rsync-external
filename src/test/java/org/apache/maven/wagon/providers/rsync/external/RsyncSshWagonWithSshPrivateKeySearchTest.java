@@ -28,7 +28,7 @@ import org.apache.maven.wagon.resource.Resource;
 /**
  * @author <a href="michal.maczka@dimatics.com">Michal Maczka</a>
  */
-public class RsyncWagonWithSshPrivateKeySearchTest extends WagonTestCase {
+public class RsyncSshWagonWithSshPrivateKeySearchTest extends WagonTestCase {
     @Override
     protected boolean supportsGetIfNewer() {
         return false;
@@ -46,12 +46,12 @@ public class RsyncWagonWithSshPrivateKeySearchTest extends WagonTestCase {
 
     @Override
     protected String getProtocol() {
-        return "rsyncexe";
+        return "rsyncsshexe";
     }
 
     @Override
     public String getTestRepositoryUrl() {
-        return TestData.getTestRepositoryUrl();
+        return TestData.getTestRepositoryUrl(this.getProtocol());
     }
 
     @Override
