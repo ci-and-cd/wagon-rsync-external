@@ -136,12 +136,417 @@ under the License.
         <skipITs>true</skipITs>
       </properties>
     </profile>
+    <profile>
+      <id>gitflow</id>
+      <activation>
+        <file><exists>${basedir}/.git</exists></file>
+        <property><name>!gitflow.disabled</name></property>
+      </activation>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>pl.project13.maven</groupId>
+              <artifactId>git-commit-id-plugin</artifactId>
+              <version>${version.git-commit-id-plugin}</version>
+              <configuration>
+                <commitIdGenerationMode>flat</commitIdGenerationMode>
+                <dotGitDirectory>${maven.multiModuleProjectDirectory}/.git</dotGitDirectory>
+                <failOnNoGitDirectory>false</failOnNoGitDirectory>
+                <failOnUnableToExtractRepoInfo>true</failOnUnableToExtractRepoInfo>
+                <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                <!--generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename-->
+                <generateGitPropertiesFilename>src/main/resources/git.properties</generateGitPropertiesFilename>
+                <injectAllReactorProjects>true</injectAllReactorProjects>
+                <prefix>git</prefix>
+                <skipPoms>false</skipPoms>
+                <verbose>false</verbose>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+      <properties>
+        <version.git-commit-id-plugin>2.2.6</version.git-commit-id-plugin>
+      </properties>
+    </profile>
+    <profile>
+      <id>gpg2-arguments</id>
+      <activation><property><name>gpg.loopback</name><value>true</value></property></activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <configuration>
+              <gpgArguments>
+                <gpgArgument>--use-agent</gpgArgument>
+                <gpgArgument>--pinentry-mode</gpgArgument>
+                <gpgArgument>loopback</gpgArgument>
+              </gpgArguments>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>gpg-for-travis-and-maven-central</id>
+      <activation><property><name>gpg.executable</name></property></activation>
+      <properties>
+        <!-- Do not set gpg.executable here -->
+        <!--<gpg.executable>gpg</gpg.executable>-->
+        <gpg.keyname>${env.CI_OPT_GPG_KEYNAME}</gpg.keyname>
+        <gpg.passphrase>${env.CI_OPT_GPG_PASSPHRASE}</gpg.passphrase>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution><id>sign-artifacts</id><phase>verify</phase><goals><goal>sign</goal></goals></execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>default-infrastructure_ossrh</id>
+      <activation><property><name>!infrastructure</name></property></activation>
+      <distributionManagement>
+        <repository><id>ossrh-nexus2-staging</id><url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url></repository>
+        <snapshotRepository><id>ossrh-nexus2-snapshots</id><url>https://oss.sonatype.org/content/repositories/snapshots</url></snapshotRepository>
+      </distributionManagement>
+    </profile>
+
+    <profile>
+      <id>infrastructure_custom</id>
+      <activation><property><name>infrastructure</name><value>custom</value></property></activation>
+      <distributionManagement>
+        <repository><id>custom-nexus3-releases</id><url>${custom.nexus3}repository/maven-releases/</url></repository>
+        <snapshotRepository><id>custom-nexus3-snapshots</id><url>${custom.nexus3}repository/maven-snapshots/</url></snapshotRepository>
+      </distributionManagement>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>custom-nexus3-releases</id>
+          <name>custom nexus3 releases</name>
+          <url>${custom.nexus3}repository/maven-releases/</url>
+          <releases><enabled>true</enabled><updatePolicy>never</updatePolicy></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </pluginRepository>
+        <pluginRepository>
+          <id>custom-nexus3-snapshots</id>
+          <name>custom nexus3 snapshots</name>
+          <url>${custom.nexus3}repository/maven-snapshots/</url>
+          <releases><enabled>false</enabled></releases>
+          <snapshots><enabled>true</enabled><updatePolicy>daily</updatePolicy></snapshots>
+        </pluginRepository>
+        <pluginRepository>
+          <id>custom-nexus3-thirdparty</id>
+          <name>custom nexus3 thirdparty</name>
+          <url>${custom.nexus3}repository/maven-thirdparty/</url>
+          <releases><enabled>true</enabled><updatePolicy>never</updatePolicy></releases>
+          <snapshots><enabled>true</enabled><updatePolicy>daily</updatePolicy></snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+      <properties>
+        <nexus3>${custom.nexus3}</nexus3>
+      </properties>
+      <repositories>
+        <repository>
+          <id>custom-nexus3-releases</id>
+          <name>custom nexus3 releases</name>
+          <url>${custom.nexus3}repository/maven-releases/</url>
+          <releases><enabled>true</enabled><updatePolicy>never</updatePolicy></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+        <repository>
+          <id>custom-nexus3-snapshots</id>
+          <name>custom nexus3 snapshots</name>
+          <url>${custom.nexus3}repository/maven-snapshots/</url>
+          <releases><enabled>false</enabled></releases>
+          <snapshots><enabled>true</enabled><updatePolicy>daily</updatePolicy></snapshots>
+        </repository>
+        <repository>
+          <id>custom-nexus3-thirdparty</id>
+          <name>custom nexus3 thirdparty</name>
+          <url>${custom.nexus3}repository/maven-thirdparty/</url>
+          <releases><enabled>true</enabled><updatePolicy>never</updatePolicy></releases>
+          <snapshots><enabled>true</enabled><updatePolicy>daily</updatePolicy></snapshots>
+        </repository>
+      </repositories>
+    </profile>
+    <profile>
+      <id>nexus2_staging</id>
+      <activation><property><name>nexus2.staging</name><value>true</value></property></activation>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.sonatype.plugins</groupId>
+              <artifactId>nexus-staging-maven-plugin</artifactId>
+              <configuration>
+                <altStagingDirectory>${wagonRepository}</altStagingDirectory>
+                <autoDropAfterRelease>true</autoDropAfterRelease>
+                <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                <detectBuildFailures>true</detectBuildFailures>
+                <keepStagingRepositoryOnFailure>false</keepStagingRepositoryOnFailure>
+                <keepStagingRepositoryOnCloseRuleFailure>false</keepStagingRepositoryOnCloseRuleFailure>
+                <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                <serverId>ossrh-nexus2-staging</serverId>
+                <!--<sslAllowAll>true</sslAllowAll>-->
+                <stagingProgressPauseDurationSeconds>30</stagingProgressPauseDurationSeconds>
+                <stagingProgressTimeoutMinutes>60</stagingProgressTimeoutMinutes>
+
+                <!--
+                <skipLocalStaging>${snapshotRef}</skipLocalStaging>
+                <skipNexusStagingDeployMojo>${snapshotRef}</skipNexusStagingDeployMojo>
+                <skipRemoteStaging>${snapshotRef}</skipRemoteStaging>
+                <skipStaging>${snapshotRef}</skipStaging>
+                <skipStagingRepositoryClose>${snapshotRef}</skipStagingRepositoryClose>
+                -->
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+        <plugins>
+          <plugin>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>default-deploy</id>
+                <phase>deploy</phase>
+                <goals><goal>deploy</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <!--<extensions>true</extensions>-->
+            <executions>
+              <execution>
+                <id>default-deploy</id>
+                <phase>deploy</phase>
+                <goals><goal>deploy</goal></goals>
+              </execution>
+              <!--
+              <execution>
+                  <id>deploy-staged-repository</id>
+                  <phase>deploy</phase>
+                  <goals><goal>deploy-staged-repository</goal></goals>
+                  <configuration>
+                      <repositoryDirectory>${wagonRepository}</repositoryDirectory>
+                  </configuration>
+              </execution>
+              -->
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>maven_packages_skip</id>
+      <activation>
+        <!--<file><exists>${wagon.merge-maven-repos.source}</exists></file>-->
+        <property><name>maven.packages.skip</name><value>true</value></property>
+      </activation>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <!-- -Dassembly.skipAssembly=true -->
+            <plugin>
+              <artifactId>maven-assembly-plugin</artifactId>
+              <configuration><skipAssembly>true</skipAssembly></configuration>
+            </plugin>
+            <plugin>
+              <artifactId>maven-jar-plugin</artifactId>
+              <executions><execution><id>default-jar</id><phase>none</phase></execution></executions>
+            </plugin>
+            <plugin>
+              <artifactId>maven-install-plugin</artifactId>
+              <configuration><skip>true</skip></configuration>
+              <executions>
+                <execution>
+                  <id>default-install</id>
+                  <phase>none</phase>
+                  <goals><goal>install</goal></goals>
+                </execution>
+              </executions>
+            </plugin>
+            <plugin>
+              <artifactId>maven-deploy-plugin</artifactId>
+              <configuration><skip>true</skip></configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+        <plugins>
+          <plugin>
+            <groupId>pl.project13.maven</groupId><artifactId>git-commit-id-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>get-the-git-infos</id>
+                <phase>initialize</phase>
+                <goals><goal>revision</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>wagonRepository-on-initialize</id>
+                <phase>initialize</phase>
+                <goals><goal>bsh-property</goal></goals>
+                <configuration>
+                  <source>
+                    multiModuleProjectDirectory = System.getProperty("maven.multiModuleProjectDirectory", "");
+                    wagonRepository = multiModuleProjectDirectory + File.separator + ".mvn" + File.separator + "wagonRepository";
+
+                    deferred = wagonRepository + File.separator + "deferred";
+                    altDeployment = wagonRepository + File.separator + "altDeployment";
+
+                    System.setProperty("wagon.merge-maven-repos.source", altDeployment);
+                    session.getUserProperties().setProperty("wagon.merge-maven-repos.source", altDeployment);
+
+                    altDeploymentRepository = "repo::default::file://" + altDeployment;
+                    System.setProperty("altDeploymentRepository", altDeploymentRepository);
+                    session.getUserProperties().setProperty("altDeploymentRepository", altDeploymentRepository);
+                  </source>
+                  <properties><property>wagonRepository</property></properties>
+                </configuration>
+              </execution>
+              <execution>
+                <id>gitRef-on-initialize</id>
+                <phase>initialize</phase>
+                <goals><goal>bsh-property</goal></goals>
+                <configuration>
+                  <source>
+                    gitRef = session.getUserProperties().getProperty("git.branch", System.getProperty("git.branch", project.getProperties().getProperty("git.branch")));
+                  </source>
+                  <properties><property>gitRef</property></properties>
+                </configuration>
+              </execution>
+              <execution>
+                <id>targetId-on-initialize</id>
+                <phase>initialize</phase>
+                <goals><goal>bsh-property</goal></goals>
+                <configuration>
+                  <source>
+                    gitRef = project.getProperties().getProperty("gitRef");
+                    releaseRef = gitRef == null || gitRef.equals("") ? false : gitRef.startsWith("hotfix/") || gitRef.startsWith("release/") || gitRef.startsWith("support/");
+                    snapshotRef = gitRef == null || gitRef.equals("") ? false : gitRef.equals("develop") || gitRef.startsWith("feature/");
+                    channel = releaseRef ? "releases" : snapshotRef ? "snapshots" : "mixed";
+
+                    targetId = "custom-nexus3-" + channel;
+
+                    System.setProperty("wagon.merge-maven-repos.targetId", targetId);
+                    session.getUserProperties().setProperty("wagon.merge-maven-repos.targetId", targetId);
+                    project.getProperties().setProperty("wagon.merge-maven-repos.targetId", targetId);
+                  </source>
+                  <properties><property>targetId</property></properties>
+                </configuration>
+              </execution>
+              <execution>
+                <id>targetRepo-on-initialize</id>
+                <phase>initialize</phase>
+                <goals><goal>bsh-property</goal></goals>
+                <configuration>
+                  <source>
+                    gitRef = project.getProperties().getProperty("gitRef");
+                    releaseRef = gitRef == null || gitRef.equals("") ? false : gitRef.startsWith("hotfix/") || gitRef.startsWith("release/") || gitRef.startsWith("support/");
+                    snapshotRef = gitRef == null || gitRef.equals("") ? false : gitRef.equals("develop") || gitRef.startsWith("feature/");
+                    channel = releaseRef ? "releases" : snapshotRef ? "snapshots" : "mixed";
+
+                    targetRepo = "${custom.nexus3}repository/maven-" + channel + "/";
+
+                    System.setProperty("wagon.merge-maven-repos.target", targetRepo);
+                    session.getUserProperties().setProperty("wagon.merge-maven-repos.target", targetRepo);
+                    project.getProperties().setProperty("wagon.merge-maven-repos.target", targetRepo);
+                  </source>
+                  <properties><property>targetRepo</property></properties>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>echo-altDeploymentRepository-at-initialize</id>
+                <phase>initialize</phase>
+                <goals><goal>run</goal></goals>
+                <configuration>
+                  <target>
+                    <echo message="altDeploymentRepository: ${altDeploymentRepository}"/>
+                  </target>
+                </configuration>
+              </execution>
+              <execution>
+                <id>echo-wagon-properties-at-initialize</id>
+                <phase>initialize</phase>
+                <goals><goal>run</goal></goals>
+                <configuration>
+                  <target>
+                    <echo message="gitRef: ${gitRef}"/>
+                    <echo message="wagon.merge-maven-repos.source: ${wagon.merge-maven-repos.source}"/>
+                    <echo message="wagon.merge-maven-repos.target: ${wagon.merge-maven-repos.target}"/>
+                    <echo message="wagon.merge-maven-repos.targetId: ${wagon.merge-maven-repos.targetId}"/>
+                  </target>
+                </configuration>
+              </execution>
+              <execution>
+                <id>rename-maven_metadata_nexus_xml-to-maven_metadata_xml</id>
+                <inherited>false</inherited>
+                <phase>initialize</phase>
+                <goals><goal>run</goal></goals>
+                <configuration>
+                  <target>
+                    <echo message="rename ${wagon.merge-maven-repos.source}/**/maven-metadata-nexus.xml"/>
+                    <mkdir dir="${wagon.merge-maven-repos.source}"/>
+                    <move includeemptydirs="false"
+                          overwrite="true"
+                          todir="${wagon.merge-maven-repos.source}"
+                          verbose="true">
+                      <fileset dir="${wagon.merge-maven-repos.source}">
+                        <include name="**/maven-metadata-nexus.*"/>
+                      </fileset>
+                      <filtermapper>
+                        <replacestring from="maven-metadata-nexus" to="maven-metadata"/>
+                      </filtermapper>
+                    </move>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>wagon-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>merge-maven-repos-deploy</id>
+                <inherited>false</inherited>
+                <phase>deploy</phase>
+                <goals><goal>merge-maven-repos</goal></goals>
+                <configuration>
+                  <source>file://${wagon.merge-maven-repos.source}</source>
+                  <target>${wagon.merge-maven-repos.target}</target>
+                  <targetId>${wagon.merge-maven-repos.targetId}</targetId>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <properties>
     <checkstyle.failsOnError>false</checkstyle.failsOnError>
     <checkstyle.failOnViolation>false</checkstyle.failOnViolation>
     <checkstyle.maxAllowedViolations>10</checkstyle.maxAllowedViolations>
+
+    <custom.nexus3>https://nexus3.infra.top/nexus/</custom.nexus3>
 
     <java.version>8</java.version>
     <maven.compiler.source>1.8</maven.compiler.source>
