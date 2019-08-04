@@ -153,11 +153,11 @@ public class RsyncSshExternalWagon extends AbstractSshWagon implements RsyncWago
             ssh.append(this.getSshArgs()).append(" ");
         }
 
-        if (this.getSshArgs() != null && !this.getSshArgs().contains(" StrictHostKeyChecking=")) {
+        if (this.getSshArgs() == null || !this.getSshArgs().contains(" StrictHostKeyChecking=")) {
             ssh.append("-o StrictHostKeyChecking=no ");
         }
 
-        if (this.getSshArgs() != null && !this.getSshArgs().contains(" UserKnownHostsFile=")) {
+        if (this.getSshArgs() == null || !this.getSshArgs().contains(" UserKnownHostsFile=")) {
             final File knowHostsFile = new File("target/dummy_knowhost");
             if (knowHostsFile.exists()) {
                 knowHostsFile.delete();

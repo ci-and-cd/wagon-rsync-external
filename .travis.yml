@@ -1,14 +1,7 @@
 
-addons:
-  apt:
-    packages:
-      - aria2
-      #- gnupg
-      - gnupg2
-      - graphviz
-      - openssl
-      - whois
 before_install:
+  - sudo add-apt-repository "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) main universe restricted multiverse";
+    sudo apt -q -y install aria2 gnupg2 graphviz openssl whois zlib1g;
   - set -ex;
   #- whois $(curl ipinfo.io/ip);
   # More options -> Settings -> Environment variables -> Add
@@ -39,8 +32,19 @@ before_install:
     gpg2 --use-agent --batch=true --list-keys;
     printf 'trust\n5\ny\n' | gpg2 --use-agent --batch=true --command-fd 0 --edit-key ${CI_OPT_GPG_KEYNAME};
   - if [[ -z "${MAVEN_OPTS}" ]]; then export MAVEN_OPTS="-XX:TieredStopAtLevel=1 -XX:+UseParallelGC -Dgit.branch=${TRAVIS_BRANCH} -Dprofile=title -DprofileFormat=JSON,HTML"; fi;
-  - aria2c --file-allocation=none -c -x 10 -s 10 -m 0 --console-log-level=notice --log-level=notice --summary-interval=0 -d /usr/local/bin -o docker-compose https://github.com/docker/compose/releases/download/1.24.1/docker-compose-`uname -s`-`uname -m`;
-    chmod 755 /usr/local/bin/docker-compose;
+  - sudo aria2c --file-allocation=none -c -x 10 -s 10 -m 0 --console-log-level=notice --log-level=notice --summary-interval=0 -d /usr/local/bin -o docker-compose https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m`;
+    sudo chmod 755 /usr/local/bin/docker-compose;
+    ls -la /;
+    df -hi;
+    df -hT;
+    ls -la /var/run/;
+    df -hi /var/lib/docker;
+    sudo chown root:docker /var/run/docker.sock;
+    sudo chmod g+s,u+s,g=rw,u=rw /var/run/docker.sock;
+    sudo usermod -a -G docker $(whoami) || echo user $(whoami) already in group docker;
+    docker system prune -af;
+    sudo netstat -anop;
+    sudo service ssh stop;
     docker-compose -f docker-compose_rsync.yml up -d;
   ## see: https://github.com/travis-ci/travis.rb
   #- if [[ "${CLEAN_TRAVIS_LOGS}" == "true" ]]; then
@@ -67,18 +71,18 @@ cache:
     - "$HOME/.m2/repository"
     - "$HOME/.m2/wrapper"
     - "$HOME/.sonar/cache"
-dist: xenial
+dist: bionic
 env:
   global:
     - MAVEN_SKIP_RC=true
 group: edge
 install: true
-jdk:
-  - openjdk8
-#language: java
-language: ruby
-rvm:
-  - 2.0
+#jdk:
+#  - openjdk8
+language: java
+#language: ruby
+#rvm:
+#  - 2.0
 script:
   # When prefixed with `travis_wait 30`, no log output until it is done.
   # see: https://github.com/travis-ci/travis-ci/issues/4190 or https://github.com/HaxeFoundation/hxcpp/issues/709
@@ -89,4 +93,6 @@ script:
     time ./mvnw -e ${MAVEN_GLOBAL_SETTINGS} -ntp -s settings.xml -Dcustom.nexus3=https://nexus3.infra.top/nexus/ -Dfast=true -Dinfrastructure=custom -Dmaven.clean.skip=true -Dmaven.install.skip=true -Dmaven.packages.skip=true -Dnexus2.staging=false deploy;
     if type -p column > /dev/null; then find .mvn/profiler-report -name "*.json" | xargs cat | jq -r '.projects[]|"module:", .project, "plugins", (.mojos[]|[.mojo,.time]|@tsv)' | column -t; fi; rm -rf .mvn/profiler-report;
   - kill %1
-sudo: false
+services:
+  - docker
+sudo: required
