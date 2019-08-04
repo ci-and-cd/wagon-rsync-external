@@ -27,11 +27,12 @@ under the License.
   </parent>
 
   <artifactId>wagon-rsync-external</artifactId>
-  <groupId>top.infra.ci-and-cd</groupId>
+  <groupId>top.infra.maven.wagon</groupId>
   <name>Apache Maven Wagon :: Providers :: Rsync External Provider</name>
   <description>
     Wagon provider that gets and puts artifacts with a preinstalled rsync client
   </description>
+  <version>3.3.3-SNAPSHOT</version>
 
   <build>
     <plugins>
@@ -85,6 +86,15 @@ under the License.
     <dependency><groupId>org.bouncycastle</groupId><artifactId>bcpkix-jdk15on</artifactId><scope>test</scope><version>${version.bouncycastle}</version></dependency>
     <dependency><groupId>commons-io</groupId><artifactId>commons-io</artifactId><scope>test</scope></dependency>
   </dependencies>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency><groupId>org.apache.maven.wagon</groupId><artifactId>wagon-provider-api</artifactId><version>${version.wagon}</version></dependency>
+      <dependency><groupId>org.apache.maven.wagon</groupId><artifactId>wagon-provider-test</artifactId><version>${version.wagon}</version></dependency>
+      <dependency><groupId>org.apache.maven.wagon</groupId><artifactId>wagon-ssh-common</artifactId><version>${version.wagon}</version></dependency>
+      <dependency><groupId>org.apache.maven.wagon</groupId><artifactId>wagon-ssh-common-test</artifactId><version>${version.wagon}</version></dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <profiles>
     <profile>
@@ -559,5 +569,7 @@ under the License.
     <version.bouncycastle>1.56</version.bouncycastle>
     <version.lombok>1.18.8</version.lombok>
     <version.maven-antrun-plugin>1.8</version.maven-antrun-plugin>
+
+    <version.wagon>3.3.3</version.wagon>
   </properties>
 </project>
