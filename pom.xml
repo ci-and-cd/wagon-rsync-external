@@ -99,9 +99,9 @@ under the License.
               <excludes>
                 <exclude>**/SshCommandExecutorTest.*</exclude>
                 <exclude>**/Rsync*Test.*</exclude>
-                <exclude>**/EmbeddedRsync*WagonWithKeyTest.*</exclude>
+                <exclude>**/Embedded*WagonWithKeyTest.*</exclude>
               </excludes>
-              <runOrder>alphabetical</runOrder>
+              <!--<runOrder>alphabetical</runOrder>-->
               <systemPropertyVariables>
                 <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
               </systemPropertyVariables>

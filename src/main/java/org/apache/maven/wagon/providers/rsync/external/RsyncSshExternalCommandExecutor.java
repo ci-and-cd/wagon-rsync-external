@@ -28,9 +28,9 @@ package org.apache.maven.wagon.providers.rsync.external;
  * role-hint="rsyncsshexe"
  * instantiation-strategy="per-lookup"
  */
-public class RsyncExternalCommandExecutor extends RsyncExternalWagon {
+public class RsyncSshExternalCommandExecutor extends RsyncSshExternalWagon {
 
-    public RsyncExternalCommandExecutor() {
+    public RsyncSshExternalCommandExecutor() {
         super();
     }
 }

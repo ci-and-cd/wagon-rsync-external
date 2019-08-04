@@ -1,5 +1,24 @@
 package org.apache.maven.wagon.providers.rsync.external;
 
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 import java.io.File;
 import java.io.FileNotFoundException;
 
@@ -7,17 +26,14 @@ import org.apache.maven.wagon.CommandExecutionException;
 import org.apache.maven.wagon.CommandExecutor;
 import org.apache.maven.wagon.Streams;
 import org.apache.maven.wagon.WagonConstants;
-import org.apache.maven.wagon.authentication.AuthenticationInfo;
 import org.apache.maven.wagon.providers.ssh.ScpHelper;
 import org.codehaus.plexus.util.cli.CommandLineException;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.codehaus.plexus.util.cli.Commandline;
 
-public interface SshCommandExecutor extends CommandExecutor {
+public interface SshCommandExecutor extends CommandExecutor, WagonHasAuthenticationInfo {
 
     int SSH_FATAL_EXIT_CODE = 255;
-
-    AuthenticationInfo getAuthenticationInfo();
 
     String getSshExecutable();
 
@@ -42,14 +58,7 @@ public interface SshCommandExecutor extends CommandExecutor {
         } catch (FileNotFoundException e) {
             throw new CommandExecutionException(e.getMessage(), e);
         }
-        Commandline cl = createSshScpBaseCommandLine(this.getSshExecutable(), privateKey);
-
-        int port = this.getRepository().getPort() == WagonConstants.UNKNOWN_PORT
-            ? ScpHelper.DEFAULT_SSH_PORT
-            : this.getRepository().getPort();
-        if (port != ScpHelper.DEFAULT_SSH_PORT) {
-            cl.createArg().setLine("-p " + port);
-        }
+        Commandline cl = createSshBaseCommandLine(this.getSshExecutable(), privateKey);
 
         if (this.getSshArgs() != null) {
             cl.createArg().setLine(this.getSshArgs());
@@ -58,6 +67,13 @@ public interface SshCommandExecutor extends CommandExecutor {
         final String remoteHost = this.buildRemoteHost();
 
         cl.createArg().setValue(remoteHost);
+
+        int port = this.getRepository().getPort() == WagonConstants.UNKNOWN_PORT
+            ? ScpHelper.DEFAULT_SSH_PORT
+            : this.getRepository().getPort();
+        if (port != ScpHelper.DEFAULT_SSH_PORT) {
+            cl.createArg().setLine("-p " + port);
+        }
 
         cl.createArg().setValue(command);
 
@@ -83,26 +99,7 @@ public interface SshCommandExecutor extends CommandExecutor {
         }
     }
 
-    /**
-     * The hostname of the remote server prefixed with the username,
-     * which comes either from the repository URL or from the authenticationInfo.
-     *
-     * @return remote host string
-     */
-    default String buildRemoteHost() {
-        String username = this.getRepository().getUsername();
-        if (username == null) {
-            username = getAuthenticationInfo().getUserName();
-        }
-
-        if (username == null) {
-            return getRepository().getHost();
-        } else {
-            return username + "@" + getRepository().getHost();
-        }
-    }
-
-    default Commandline createSshScpBaseCommandLine(final String executable, final File privateKey) {
+    default Commandline createSshBaseCommandLine(final String executable, final File privateKey) {
         final Commandline cl = new Commandline();
 
         cl.setExecutable(executable);
