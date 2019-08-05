@@ -34,13 +34,15 @@ public class RsyncListParserTest extends TestCase {
             + "drwxr-xr-x            128 2019/08/04 00:10:20 .\n"
             + "-rw-r--r--             18 2019/08/04 00:10:20 test-resource\n"
             + "drwxr-xr-x            224 2019/08/04 00:10:20 file-list\n"
-            + "drwxr-xr-x            256 2019/08/04 03:03:16 file-list";
+            + "drwxr-xr-x            256 2019/08/04 03:03:16 file-list\n"
+            + "drwxr-xr-x          4,096 2019/08/04 03:03:16 file-list1";;
 
         RsyncListParser parser = new RsyncListParser();
         List<String> files = parser.parseFiles(rawLS);
         assertNotNull(files);
-        assertEquals(4, files.size());
+        assertEquals(5, files.size());
         assertTrue(files.contains("test-resource"));
         assertTrue(files.contains("file-list/"));
+        assertTrue(files.contains("file-list1/"));
     }
 }

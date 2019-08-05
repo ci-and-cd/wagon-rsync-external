@@ -210,6 +210,11 @@ public abstract class AbstractExternalWagon extends AbstractWagon implements Ext
         firePutCompleted(resource, source);
     }
 
+    @Override
+    public boolean supportsDirectoryCopy() {
+        return ExternalWagon.super.supportsDirectoryCopy();
+    }
+
     protected abstract void putMkdirRemote(
         String destination
     ) throws AuthorizationException, ResourceDoesNotExistException, TransferFailedException;
