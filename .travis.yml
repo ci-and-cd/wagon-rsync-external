@@ -45,6 +45,8 @@ before_install:
     docker system prune -af;
     sudo netstat -anop;
     sudo service ssh stop;
+    if [[ ! -f ~/.ssh/id_rsa ]]; then cp src/test/ssh-keys/* ~/.ssh/; chmod 400 ~/.ssh/id_rsa*; chmod 644 ~/.ssh/id_rsa*.pub; fi;
+    ls -la ~/.ssh/;
     docker-compose -f docker-compose_rsync.yml up -d;
   ## see: https://github.com/travis-ci/travis.rb
   #- if [[ "${CLEAN_TRAVIS_LOGS}" == "true" ]]; then
