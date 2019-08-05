@@ -47,8 +47,8 @@ Vagrant.configure("2") do |config|
   config.vm.network :forwarded_port, guest: 22, host: 2230, auto_correct: true
   config.ssh.port = 2230
 
-  config.vm.network :forwarded_port, guest: 873, host: 873, id: "rsync"
-  config.vm.network :forwarded_port, guest: 5005, host: 5005, id: "remote_debug"
+  config.vm.network :forwarded_port, guest: 873, host: 2873, id: "rsync"
+  config.vm.network :forwarded_port, guest: 5005, host: 25005, id: "remote_debug"
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
@@ -191,8 +191,8 @@ EOF
 
 
     #git clone -b master https://github.com/ci-and-cd/docker-rsync.git /home/vagrant/docker-rsync
-    echo -e '\nexport EXTERNAL_RSYNC_873_PORT=873' >> /home/vagrant/.profile
-    echo -e '\nexport EXTERNAL_SSH_22_PORT=22' >> /home/vagrant/.profile
+    echo -e '\nexport EXTERNAL_RSYNC_873_PORT=8873' >> /home/vagrant/.profile
+    echo -e '\nexport EXTERNAL_SSH_22_PORT=8022' >> /home/vagrant/.profile
 
     echo -e '\nLANG=en_US.utf-8' >> /etc/environment
     echo -e '\nLC_ALL=en_US.utf-8' >> /etc/environment

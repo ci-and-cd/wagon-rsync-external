@@ -11,12 +11,25 @@ public class TestData {
         return System.getProperty("java.io.tmpdir", "/target");
     }
 
-    public static String getTestRepositoryUrl(String protocol, int port) {
+    private static String getTestRepositoryUrl(String protocol, int port) {
         return protocol + "://" + getHostname() + ":" + port + getRepoPath();
     }
 
     public static String getTestRepositoryUrl(String protocol) {
-        return protocol + "://" + getHostname() + getRepoPath();
+        final Integer port = getPort(protocol);
+        return port == null
+            ? protocol + "://" + getHostname() + getRepoPath()
+            : getTestRepositoryUrl(protocol, port);
+    }
+
+    public static Integer getPort(String protocol) {
+        final String port;
+        if ("rsyncexe".equals(protocol)) {
+            port = System.getProperty("test.rsyncdPort");
+        } else {
+            port = System.getProperty("test.sshPort");
+        }
+        return port == null ? null : Integer.parseInt(port);
     }
 
     private static String getRepoPath() {

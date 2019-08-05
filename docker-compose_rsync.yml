@@ -13,8 +13,8 @@ services:
     image: ${IMAGE_PREFIX:-cirepo/}${IMAGE_NAME:-rsync}:${IMAGE_TAG:-latest}
     network_mode: bridge
     ports:
-      - "${EXTERNAL_RSYNC_873_PORT:-873}:873"
-      - "${EXTERNAL_SSH_22_PORT:-22}:22"
+      - "${EXTERNAL_RSYNC_873_PORT:-8873}:873"
+      - "${EXTERNAL_SSH_22_PORT:-8022}:22"
     restart: always
     volumes:
       - data:${RSYNC_VOLUME_PATH:-/volume}

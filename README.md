@@ -28,15 +28,15 @@ Or
 vagrant up
 vagrant ssh
 cd /vagrant
-./mvnw -Dssh-tests -Dtest.user=vagrant -Duser.name=vagrant clean verify
+./mvnw -Dssh-tests -Dtest.rsyncdPort=873 -Dtest.sshPort=22 -Dtest.user=vagrant -Duser.name=vagrant clean verify
 # or debug
-./mvnw -Dmaven.surefire.debug -Dssh-tests -Dtest.host=192.168.33.20 -Dtest.user=vagrant -Duser.name=vagrant clean verify
+./mvnw -Dmaven.surefire.debug -Dssh-tests -Dtest.host=192.168.33.20 -Dtest.rsyncdPort=2873 -Dtest.sshPort=2230 -Dtest.user=vagrant -Duser.name=vagrant clean verify
 ```
 
 Or
 ```shell script
 docker-compose -f docker-compose_rsync.yml up -d
-./mvnw -Dssh-tests -Dtest.user=root -Duser.name=root clean verify
+./mvnw -Dssh-tests -Dtest.rsyncdPort=8873 -Dtest.sshPort=8022 -Dtest.user=root -Duser.name=root clean verify
 ```
 
 

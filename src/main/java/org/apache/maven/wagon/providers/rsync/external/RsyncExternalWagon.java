@@ -32,6 +32,7 @@ import org.apache.maven.wagon.PathUtils;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
 import org.apache.maven.wagon.Streams;
 import org.apache.maven.wagon.TransferFailedException;
+import org.apache.maven.wagon.WagonConstants;
 import org.apache.maven.wagon.authorization.AuthorizationException;
 import org.apache.maven.wagon.resource.Resource;
 import org.codehaus.plexus.util.StringUtils;
@@ -74,7 +75,10 @@ public class RsyncExternalWagon extends AbstractExternalWagon implements RsyncWa
 
     @Override
     public String buildRemoteHost() {
-        return "rsync://" + super.buildRemoteHost();
+        final int port = this.getRepository().getPort() == WagonConstants.UNKNOWN_PORT
+            ? 873 // DEFAULT_RSYNCD_PORT
+            : this.getRepository().getPort();
+        return "rsync://" + super.buildRemoteHost() + ":" + port;
     }
 
     @Override
@@ -182,7 +186,7 @@ public class RsyncExternalWagon extends AbstractExternalWagon implements RsyncWa
                 cl.createArg().setValue("--recursive");
             }
             final String path = getPath(this.getRepository().getBasedir(), destinationDirectory);
-            cl.createArg().setValue(this.buildRemoteHost() + ":" + StringUtils.replace(suffixSlash(path), " ", "\\ "));
+            cl.createArg().setValue(this.buildRemoteHost() + StringUtils.replace(suffixSlash(path), " ", "\\ "));
 
             Streams streams = this.executeCommand(cl, false);
             return new RsyncListParser().parseFiles(streams.getOut()).stream()

@@ -91,8 +91,9 @@ public abstract class AbstractExternalWagon extends AbstractWagon implements Ext
             cl.addEnvironment(RSYNC_PASSWORD, this.getAuthenticationInfo().getPassword());
         }
 
-        final String qualifiedRemoteFile = this.buildRemoteHost()
-            + ":"
+        final String remoteHost = this.buildRemoteHost();
+        final String qualifiedRemoteFile = remoteHost
+            + (remoteHost.contains(":") ? "" : ":")
             + StringUtils.replace(options.length > 0 ? suffixSlash(remoteFile) : remoteFile, " ", "\\ ");
 
         final String localFileName = options.length > 0 ? suffixSlash(localFile.getName()) : localFile.getName();

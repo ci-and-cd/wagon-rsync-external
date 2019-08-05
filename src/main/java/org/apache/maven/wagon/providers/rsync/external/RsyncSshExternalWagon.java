@@ -173,7 +173,7 @@ public class RsyncSshExternalWagon extends AbstractSshWagon implements RsyncWago
             ? ScpHelper.DEFAULT_SSH_PORT
             : this.getRepository().getPort();
         if (port != ScpHelper.DEFAULT_SSH_PORT) {
-            ssh.append("-P ").append(port).append(" ");
+            ssh.append("-p ").append(port).append(" ");
         }
 
         final String username = this.getRepository().getUsername() != null

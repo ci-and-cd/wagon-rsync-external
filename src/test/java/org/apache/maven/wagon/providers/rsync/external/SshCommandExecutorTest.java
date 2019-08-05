@@ -26,12 +26,15 @@ import org.apache.maven.wagon.repository.Repository;
  * Test the command executor.
  *
  * @author <a href="mailto:brett@apache.org">Brett Porter</a>
- *
  */
 public class SshCommandExecutorTest extends CommandExecutorTestCase {
 
-    protected Repository getTestRepository()
-    {
-        return new Repository( "test", "rsyncsshexe://localhost/" );
+    protected Repository getTestRepository() {
+        final String protocol = "rsyncsshexe";
+        final Integer port = TestData.getPort(protocol);
+        final String repoUrl = port == null
+            ? protocol + "://" + TestData.getHostname() + "/"
+            : protocol + "://" + TestData.getHostname() + ":" + port + "/";
+        return new Repository("test", repoUrl);
     }
 }
