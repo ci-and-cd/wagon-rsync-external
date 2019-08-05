@@ -21,6 +21,7 @@ package org.apache.maven.wagon.providers.rsync.external;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import org.apache.maven.wagon.CommandExecutionException;
 import org.apache.maven.wagon.CommandExecutor;
@@ -112,6 +113,24 @@ public interface SshCommandExecutor extends CommandExecutor, WagonHasAuthenticat
         // should check interactive flag, but rsyncsshexe never works in interactive mode right now due to i/o streams
         cl.createArg().setValue("-o");
         cl.createArg().setValue("BatchMode yes");
+
+        if (this.getSshArgs() == null || !this.getSshArgs().contains(" StrictHostKeyChecking=")) {
+            cl.createArg().setValue("-o");
+            cl.createArg().setValue("StrictHostKeyChecking=no");
+        }
+
+        if (this.getSshArgs() == null || !this.getSshArgs().contains(" UserKnownHostsFile=")) {
+            final File knowHostsFile = new File("target/dummy_knowhost");
+            if (knowHostsFile.exists()) {
+                knowHostsFile.delete();
+            }
+            try {
+                cl.createArg().setValue("-o");
+                cl.createArg().setValue("UserKnownHostsFile=" + knowHostsFile.getCanonicalPath());
+            } catch (final IOException ignored) {
+                // ignored
+            }
+        }
         return cl;
     }
 }

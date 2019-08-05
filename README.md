@@ -29,6 +29,8 @@ vagrant up
 vagrant ssh
 cd /vagrant
 ./mvnw -Dssh-tests -Dtest.user=vagrant -Duser.name=vagrant clean verify
+# or debug
+./mvnw -Dmaven.surefire.debug -Dssh-tests -Dtest.host=192.168.33.20 -Dtest.user=vagrant -Duser.name=vagrant clean verify
 ```
 
 Or
@@ -42,4 +44,4 @@ docker-compose -f docker-compose_rsync.yml up -d
 
 see: https://maven.apache.org/surefire/maven-surefire-plugin/examples/debugging.html
 
-`./mvnw -e -ntp -Dtest.user=root -Duser.name=root -Dssh-tests -Dmaven.surefire.debug clean test;`
+`./mvnw -e -ntp -Dmaven.surefire.debug -Dssh-tests -Dtest.user=root -Duser.name=root clean test;`

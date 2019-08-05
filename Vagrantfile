@@ -47,6 +47,9 @@ Vagrant.configure("2") do |config|
   config.vm.network :forwarded_port, guest: 22, host: 2230, auto_correct: true
   config.ssh.port = 2230
 
+  config.vm.network :forwarded_port, guest: 873, host: 873, id: "rsync"
+  config.vm.network :forwarded_port, guest: 5005, host: 5005, id: "remote_debug"
+
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
   # your network.
@@ -108,8 +111,8 @@ Vagrant.configure("2") do |config|
 
 
     chown vagrant:vagrant /home/vagrant/.ssh/id_rsa*
-    chmod 400 /home/vagrant/.ssh/id_rsa
-    chmod 644 /home/vagrant/.ssh/id_rsa.pub
+    chmod 400 /home/vagrant/.ssh/id_rsa /home/vagrant/.ssh/id_rsa-passphrase
+    chmod 644 /home/vagrant/.ssh/id_rsa.pub /home/vagrant/.ssh/id_rsa-passphrase.pub
 
 
     mkdir -p /var/run/sshd
@@ -118,9 +121,11 @@ Vagrant.configure("2") do |config|
     sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
     sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
 
-    RSYNC_USERNAME=${RSYNC_USERNAME:-root}
+    RSYNC_USERNAME=${RSYNC_USERNAME:-vagrant}
     RSYNC_PASSWORD=${RSYNC_PASSWORD:-comeonFrance!:-)}
-    RSYNC_HOSTS_ALLOW=${RSYNC_HOSTS_ALLOW:-192.168.0.0/16 192.168.33.0/24 127.0.0.1/32}
+    echo -e "\nexport RSYNC_PASSWORD='comeonFrance!:-)'" >> /home/vagrant/.profile
+    RSYNC_HOSTS_ALLOW=${RSYNC_HOSTS_ALLOW:-192.168.33.0/24 172.17.0.0/16 192.168.0.0/16 127.0.0.1/32 ::1}
+    RSYNC_VOLUME_NAME=${RSYNC_VOLUME_NAME:-volume}
     RSYNC_VOLUME_PATH=${RSYNC_VOLUME_PATH:-/volume}
 
     if [[ -e "/home/vagrant/.ssh/authorized_keys" ]]; then
@@ -140,47 +145,52 @@ Vagrant.configure("2") do |config|
     chmod 0440 /etc/rsyncd.secrets
     mkdir -p ${RSYNC_VOLUME_PATH}
     chown vagrant:root ${RSYNC_VOLUME_PATH}
+    chmod g+rxw,u+rxw ${RSYNC_VOLUME_PATH}
 
     [[ -f /etc/rsyncd.conf ]] || cat <<EOF > /etc/rsyncd.conf
+auth users = ${RSYNC_USERNAME}
+#gid = vagrant
+hosts allow = ${RSYNC_HOSTS_ALLOW}
+hosts deny = *
+list = yes
 lock file = /var/lock/rsyncd.lock
 #log file = /dev/stdout
 log file = /var/log/rsync.log
 max connections = 10
 #pid file = /var/run/rsyncd.pid
 port = 873
+read only = false
+secrets file = /etc/rsyncd.secrets
 timeout = 300
-[volume]
-    auth users = ${RSYNC_USERNAME}
+#uid = vagrant
+use chroot = no
+[${RSYNC_VOLUME_NAME}]
     comment = ${RSYNC_VOLUME_PATH} directory
-    gid = vagrant
-    hosts allow = ${RSYNC_HOSTS_ALLOW}
-    hosts deny = *
-    list = yes
     path = ${RSYNC_VOLUME_PATH}
-    read only = false
-    secrets file = /etc/rsyncd.secrets
-    uid = vagrant
 EOF
 
     sed -Ei 's/[#]?RSYNC_ENABLE=false$/RSYNC_ENABLE=inetd/' /etc/default/rsync
     mkdir -p /etc/xinetd.d
     [[ -f /etc/xinetd.d/rsync ]] || cat <<EOF > /etc/xinetd.d/rsync
-service rsync{
+service rsync
+{
     disable         = no
+    flags	        	= IPv4
     socket_type     = stream
     wait            = no
     user            = vagrant
     server          = /usr/bin/rsync
-    server_args     = --daemon
+    server_args     = --daemon --config=/etc/rsyncd.conf
     log_on_failure  += USERID
 }
 EOF
     /etc/init.d/xinetd restart
-    /etc/init.d/rsync restart
+    systemctl status xinetd
+    #/etc/init.d/rsync restart
     netstat -anop | grep 873
 
 
-    git clone -b master https://github.com/ci-and-cd/docker-rsync.git /home/vagrant/docker-rsync
+    #git clone -b master https://github.com/ci-and-cd/docker-rsync.git /home/vagrant/docker-rsync
     echo -e '\nexport EXTERNAL_RSYNC_873_PORT=873' >> /home/vagrant/.profile
     echo -e '\nexport EXTERNAL_SSH_22_PORT=22' >> /home/vagrant/.profile
 

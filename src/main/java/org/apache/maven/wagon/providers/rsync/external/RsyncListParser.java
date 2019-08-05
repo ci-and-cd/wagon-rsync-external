@@ -51,7 +51,7 @@ public class RsyncListParser {
      * <li>drwxr-xr-x            224 2019/08/04 00:10:20 file-list</li>
      * </ul>
      */
-    private static final Pattern PATTERN = Pattern.compile("^([d-]).+\\s+[0-9]+\\s+[0-9/]+\\s+[0-9:]+\\s+(.+?)");
+    private static final Pattern PATTERN = Pattern.compile("^([d-]).+\\s+[0-9,]+\\s+[0-9/]+\\s+[0-9:]+\\s+(.+?)");
 
     /**
      * Parse a raw "ls -FlA", and obtain the list of files.
