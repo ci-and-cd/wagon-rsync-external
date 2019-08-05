@@ -197,6 +197,8 @@ EOF
     echo -e '\nLANG=en_US.utf-8' >> /etc/environment
     echo -e '\nLC_ALL=en_US.utf-8' >> /etc/environment
 
+    echo -e '\nexport CI_OPT_GPG_KEYNAME=59DBF10E' >> /home/vagrant/.profile
+
     chown -R vagrant:vagrant /home/vagrant
   SHELL
 end

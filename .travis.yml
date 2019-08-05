@@ -1,8 +1,8 @@
 
 before_install:
-  - sudo add-apt-repository "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) main universe restricted multiverse";
-    sudo apt -q -y install aria2 gnupg2 graphviz openssl whois zlib1g;
   - set -ex;
+  - sudo add-apt-repository "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) main universe restricted multiverse";
+    sudo apt -q -y install aria2 gnupg2 graphviz openssl whois;
   #- whois $(curl ipinfo.io/ip);
   # More options -> Settings -> Environment variables -> Add
   # CI_OPT_GPG_KEYNAME
@@ -77,7 +77,6 @@ dist: bionic
 env:
   global:
     - MAVEN_SKIP_RC=true
-group: edge
 install: true
 #jdk:
 #  - openjdk8
