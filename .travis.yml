@@ -47,6 +47,8 @@ before_install:
     if [[ ! -f ~/.ssh/id_rsa ]]; then cp src/test/ssh-keys/* ~/.ssh/; chmod 400 ~/.ssh/id_rsa*; chmod 644 ~/.ssh/id_rsa*.pub; fi;
     ls -la ~/.ssh/;
     docker-compose -f docker-compose_rsync.yml up -d;
+    chmod 400 src/test/ssh-keys/id_rsa src/test/ssh-keys/id_rsa.pub;
+    chmod 644 src/test/ssh-keys/id_rsa-passphrase src/test/ssh-keys/id_rsa-passphrase.pub;
   ## see: https://github.com/travis-ci/travis.rb
   #- if [[ "${CLEAN_TRAVIS_LOGS}" == "true" ]]; then
   #    ruby -v; gem install travis -v 1.8.10 --no-rdoc --no-ri; travis version;
