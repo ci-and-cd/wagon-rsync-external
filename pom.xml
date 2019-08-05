@@ -222,8 +222,8 @@ under the License.
       <id>default-infrastructure_ossrh</id>
       <activation><property><name>!infrastructure</name></property></activation>
       <distributionManagement>
-        <repository><id>ossrh-nexus2-staging</id><url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url></repository>
-        <snapshotRepository><id>ossrh-nexus2-snapshots</id><url>https://oss.sonatype.org/content/repositories/snapshots</url></snapshotRepository>
+        <repository><id>ossrh-nexus2-staging</id><url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url></repository>
+        <snapshotRepository><id>ossrh-nexus2-snapshots</id><url>https://oss.sonatype.org/content/repositories/snapshots/</url></snapshotRepository>
       </distributionManagement>
     </profile>
 
@@ -235,6 +235,13 @@ under the License.
         <snapshotRepository><id>custom-nexus3-snapshots</id><url>${custom.nexus3}repository/maven-snapshots/</url></snapshotRepository>
       </distributionManagement>
       <pluginRepositories>
+        <pluginRepository>
+          <id>central</id>
+          <name>central</name>
+          <url>http://repo1.maven.org/maven2/</url>
+          <releases><enabled>true</enabled><updatePolicy>never</updatePolicy></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </pluginRepository>
         <pluginRepository>
           <id>custom-nexus3-releases</id>
           <name>custom nexus3 releases</name>
@@ -261,6 +268,13 @@ under the License.
         <nexus3>${custom.nexus3}</nexus3>
       </properties>
       <repositories>
+        <repository>
+          <id>central</id>
+          <name>central</name>
+          <url>http://repo1.maven.org/maven2/</url>
+          <releases><enabled>true</enabled><updatePolicy>never</updatePolicy></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </repository>
         <repository>
           <id>custom-nexus3-releases</id>
           <name>custom nexus3 releases</name>

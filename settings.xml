@@ -34,6 +34,13 @@
             <activation><property><name>custom.nexus3</name></property></activation>
             <pluginRepositories>
                 <pluginRepository>
+                    <id>central</id>
+                    <name>central</name>
+                    <url>http://repo1.maven.org/maven2/</url>
+                    <releases><enabled>true</enabled><updatePolicy>never</updatePolicy></releases>
+                    <snapshots><enabled>false</enabled></snapshots>
+                </pluginRepository>
+                <pluginRepository>
                     <id>custom-nexus3-snapshots</id>
                     <name>custom nexus3 snapshots</name>
                     <url>${custom.nexus3}repository/maven-snapshots/</url>
@@ -42,6 +49,13 @@
                 </pluginRepository>
             </pluginRepositories>
             <repositories>
+                <repository>
+                    <id>central</id>
+                    <name>central</name>
+                    <url>http://repo1.maven.org/maven2/</url>
+                    <releases><enabled>true</enabled><updatePolicy>never</updatePolicy></releases>
+                    <snapshots><enabled>false</enabled></snapshots>
+                </repository>
                 <repository>
                     <id>custom-nexus3-snapshots</id>
                     <name>custom nexus3 snapshots</name>
