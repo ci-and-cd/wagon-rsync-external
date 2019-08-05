@@ -37,8 +37,46 @@ under the License.
   <build>
     <plugins>
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>wagonRepository-on-initialize</id>
+            <phase>initialize</phase>
+            <goals><goal>bsh-property</goal></goals>
+            <configuration>
+              <source>
+                multiModuleProjectDirectory = System.getProperty("maven.multiModuleProjectDirectory", "");
+                wagonRepository = multiModuleProjectDirectory + File.separator + ".mvn" + File.separator + "wagonRepository";
+
+                deferred = wagonRepository + File.separator + "deferred";
+                altDeployment = wagonRepository + File.separator + "altDeployment";
+
+                System.setProperty("wagon.merge-maven-repos.source", altDeployment);
+                session.getUserProperties().setProperty("wagon.merge-maven-repos.source", altDeployment);
+
+                altDeploymentRepository = "repo::default::file://" + altDeployment;
+                System.setProperty("altDeploymentRepository", altDeploymentRepository);
+                session.getUserProperties().setProperty("altDeploymentRepository", altDeploymentRepository);
+              </source>
+              <properties><property>wagonRepository</property></properties>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
         <executions>
+          <execution>
+            <id>echo-altDeploymentRepository-at-initialize</id>
+            <phase>initialize</phase>
+            <goals><goal>run</goal></goals>
+            <configuration>
+              <target>
+                <echo message="altDeploymentRepository: ${altDeploymentRepository}"/>
+              </target>
+            </configuration>
+          </execution>
           <execution>
             <id>test-outputs-clean</id>
             <phase>clean</phase>
@@ -65,6 +103,7 @@ under the License.
             <skip>true</skip>
           </configuration>
         </plugin>
+        <plugin><groupId>org.codehaus.mojo</groupId><artifactId>build-helper-maven-plugin</artifactId><version>${version.build-helper-maven-plugin}</version></plugin>
         <plugin>
           <artifactId>maven-antrun-plugin</artifactId><version>${version.maven-antrun-plugin}</version>
           <dependencies>
@@ -307,6 +346,7 @@ under the License.
             <plugin>
               <groupId>org.sonatype.plugins</groupId>
               <artifactId>nexus-staging-maven-plugin</artifactId>
+              <version>${version.nexus-staging-maven-plugin}</version>
               <configuration>
                 <altStagingDirectory>${wagonRepository}</altStagingDirectory>
                 <autoDropAfterRelease>true</autoDropAfterRelease>
@@ -366,6 +406,9 @@ under the License.
           </plugin>
         </plugins>
       </build>
+      <properties>
+        <version.nexus-staging-maven-plugin>1.6.8</version.nexus-staging-maven-plugin>
+      </properties>
     </profile>
     <profile>
       <id>maven_packages_skip</id>
@@ -400,7 +443,6 @@ under the License.
               <artifactId>maven-deploy-plugin</artifactId>
               <configuration><skip>true</skip></configuration>
             </plugin>
-            <plugin><groupId>org.codehaus.mojo</groupId><artifactId>build-helper-maven-plugin</artifactId><version>${version.build-helper-maven-plugin}</version></plugin>
             <plugin><groupId>org.codehaus.mojo</groupId><artifactId>wagon-maven-plugin</artifactId><version>${version.wagon-maven-plugin}</version></plugin>
           </plugins>
         </pluginManagement>
@@ -419,28 +461,6 @@ under the License.
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>build-helper-maven-plugin</artifactId>
             <executions>
-              <execution>
-                <id>wagonRepository-on-initialize</id>
-                <phase>initialize</phase>
-                <goals><goal>bsh-property</goal></goals>
-                <configuration>
-                  <source>
-                    multiModuleProjectDirectory = System.getProperty("maven.multiModuleProjectDirectory", "");
-                    wagonRepository = multiModuleProjectDirectory + File.separator + ".mvn" + File.separator + "wagonRepository";
-
-                    deferred = wagonRepository + File.separator + "deferred";
-                    altDeployment = wagonRepository + File.separator + "altDeployment";
-
-                    System.setProperty("wagon.merge-maven-repos.source", altDeployment);
-                    session.getUserProperties().setProperty("wagon.merge-maven-repos.source", altDeployment);
-
-                    altDeploymentRepository = "repo::default::file://" + altDeployment;
-                    System.setProperty("altDeploymentRepository", altDeploymentRepository);
-                    session.getUserProperties().setProperty("altDeploymentRepository", altDeploymentRepository);
-                  </source>
-                  <properties><property>wagonRepository</property></properties>
-                </configuration>
-              </execution>
               <execution>
                 <id>gitRef-on-initialize</id>
                 <phase>initialize</phase>
@@ -497,16 +517,6 @@ under the License.
           <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
-              <execution>
-                <id>echo-altDeploymentRepository-at-initialize</id>
-                <phase>initialize</phase>
-                <goals><goal>run</goal></goals>
-                <configuration>
-                  <target>
-                    <echo message="altDeploymentRepository: ${altDeploymentRepository}"/>
-                  </target>
-                </configuration>
-              </execution>
               <execution>
                 <id>echo-wagon-properties-at-initialize</id>
                 <phase>initialize</phase>
@@ -575,7 +585,6 @@ under the License.
         </pluginRepository>
       </pluginRepositories>
       <properties>
-        <version.build-helper-maven-plugin>3.0.0</version.build-helper-maven-plugin>
         <version.wagon-maven-plugin>wagon-maven-plugin-2.0.1-snapshot-chshawkn-1.6</version.wagon-maven-plugin>
       </properties>
     </profile>
@@ -597,6 +606,7 @@ under the License.
     <version.animal-sniffer-maven-plugin>1.16</version.animal-sniffer-maven-plugin>
     <version.ant-contrib>20020829</version.ant-contrib>
     <version.bouncycastle>1.56</version.bouncycastle>
+    <version.build-helper-maven-plugin>3.0.0</version.build-helper-maven-plugin>
     <version.lombok>1.18.8</version.lombok>
     <version.maven-antrun-plugin>1.8</version.maven-antrun-plugin>
 
