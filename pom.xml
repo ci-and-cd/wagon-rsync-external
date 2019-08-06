@@ -132,6 +132,7 @@ under the License.
       <dependency><groupId>org.apache.maven.wagon</groupId><artifactId>wagon-provider-test</artifactId><version>${version.wagon}</version></dependency>
       <dependency><groupId>org.apache.maven.wagon</groupId><artifactId>wagon-ssh-common</artifactId><version>${version.wagon}</version></dependency>
       <dependency><groupId>org.apache.maven.wagon</groupId><artifactId>wagon-ssh-common-test</artifactId><version>${version.wagon}</version></dependency>
+      <dependency><groupId>org.apache.sshd</groupId><artifactId>sshd-core</artifactId><version>0.8.0</version></dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -276,7 +277,7 @@ under the License.
       <pluginRepositories>
         <pluginRepository>
           <id>central</id>
-          <name>central</name>
+          <name>Maven Central</name>
           <url>http://repo1.maven.org/maven2/</url>
           <releases><enabled>true</enabled><updatePolicy>never</updatePolicy></releases>
           <snapshots><enabled>false</enabled></snapshots>
@@ -309,7 +310,7 @@ under the License.
       <repositories>
         <repository>
           <id>central</id>
-          <name>central</name>
+          <name>Maven Central</name>
           <url>http://repo1.maven.org/maven2/</url>
           <releases><enabled>true</enabled><updatePolicy>never</updatePolicy></releases>
           <snapshots><enabled>false</enabled></snapshots>

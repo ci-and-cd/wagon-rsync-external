@@ -35,7 +35,7 @@
             <pluginRepositories>
                 <pluginRepository>
                     <id>central</id>
-                    <name>central</name>
+                    <name>Maven Central</name>
                     <url>http://repo1.maven.org/maven2/</url>
                     <releases><enabled>true</enabled><updatePolicy>never</updatePolicy></releases>
                     <snapshots><enabled>false</enabled></snapshots>
@@ -51,7 +51,7 @@
             <repositories>
                 <repository>
                     <id>central</id>
-                    <name>central</name>
+                    <name>Maven Central</name>
                     <url>http://repo1.maven.org/maven2/</url>
                     <releases><enabled>true</enabled><updatePolicy>never</updatePolicy></releases>
                     <snapshots><enabled>false</enabled></snapshots>
