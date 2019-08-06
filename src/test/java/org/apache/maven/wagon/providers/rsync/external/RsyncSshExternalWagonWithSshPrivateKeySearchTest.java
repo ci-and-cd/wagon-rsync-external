@@ -28,7 +28,7 @@ import org.apache.maven.wagon.resource.Resource;
 /**
  * @author <a href="michal.maczka@dimatics.com">Michal Maczka</a>
  */
-public class RsyncSshWagonWithSshPrivateKeySearchTest extends WagonTestCase {
+public class RsyncSshExternalWagonWithSshPrivateKeySearchTest extends WagonTestCase {
     @Override
     protected boolean supportsGetIfNewer() {
         return false;
