@@ -70,8 +70,9 @@ public abstract class AbstractExternalWagon extends AbstractWagon implements Ext
         final boolean put,
         final String... options
     ) throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
+        final boolean sshOrScp = this.getRepository().getProtocol().contains("ssh") || this.getRepository().getProtocol().contains("scp");
         File privateKey;
-        if (this.getRepository().getProtocol().contains("ssh")) {
+        if (sshOrScp) {
             try {
                 privateKey = ScpHelper.getPrivateKey(this.getAuthenticationInfo());
             } catch (final FileNotFoundException e) {
@@ -87,7 +88,7 @@ public abstract class AbstractExternalWagon extends AbstractWagon implements Ext
 
         cl.setWorkingDirectory(localFile.getParentFile().getAbsolutePath());
 
-        if (!this.getRepository().getProtocol().contains("ssh") && this.getAuthenticationInfo().getPassword() != null) {
+        if (!sshOrScp && this.getAuthenticationInfo().getPassword() != null) {
             cl.addEnvironment(RSYNC_PASSWORD, this.getAuthenticationInfo().getPassword());
         }
 
