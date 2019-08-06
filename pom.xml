@@ -32,7 +32,7 @@ under the License.
   <description>
     Wagon provider that gets and puts artifacts with a preinstalled rsync client
   </description>
-  <version>3.3.3-SNAPSHOT</version>
+  <version>3.3.3</version>
 
   <build>
     <plugins>
